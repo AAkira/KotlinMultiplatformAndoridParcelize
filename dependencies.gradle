@@ -1,0 +1,23 @@
+ext {
+    // android
+    mobileVersionCode = 1
+    mobileVersionName = "1.0.0"
+    compileSdkVersion = 28
+    buildToolsVersion = "28.0.3"
+    minSdkVersion = 21
+    instantAppMinSdkVersion = 23
+    targetSdkVersion = 28
+
+    // dependencies
+
+    // kotlin
+    kotlin = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    kotlinCommon = "org.jetbrains.kotlin:kotlin-stdlib-common:$kotlin_version"
+
+    // serialization
+    serialization_version = "0.9.1"
+    serialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+    serializationCommon = "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
+    serializationNative = "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serialization_version"
+    serializationJs = "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version"
+}

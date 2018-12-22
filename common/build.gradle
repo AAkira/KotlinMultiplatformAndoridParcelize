@@ -1,0 +1,89 @@
+apply plugin: 'kotlin-multiplatform'
+apply plugin: 'kotlinx-serialization'
+
+apply from: 'android.gradle'
+
+kotlin {
+    targets {
+        fromPreset(presets.android, 'android')
+
+        def buildForDevice = project.findProperty("device")?.toBoolean() ?: false
+        def iosPreset = (buildForDevice) ? presets.iosArm64 : presets.iosX64
+        fromPreset(iosPreset, 'ios') {
+            compilations.main.outputKinds('FRAMEWORK')
+        }
+
+        fromPreset(presets.js, 'js')
+        fromPreset(presets.jvm, 'jvm')
+    }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation rootProject.ext.kotlinCommon
+
+                // serialization
+                implementation rootProject.ext.serializationCommon
+            }
+        }
+        androidMain {
+            // written in android.gradle
+        }
+        iosMain {
+            dependencies {
+                // serialization
+                implementation rootProject.ext.serializationNative
+            }
+        }
+        jsMain {
+            dependencies {
+                // serialization
+                implementation rootProject.ext.serializationJs
+            }
+        }
+        jvmMain {
+            dependencies {
+                // serialization
+                implementation rootProject.ext.serialization
+            }
+        }
+    }
+}
+
+// ios task
+
+task packForXCode(type: Sync) {
+    final File frameworkDir = new File(buildDir, "xcode-frameworks")
+    final String mode = project.findProperty("XCODE_CONFIGURATION")?.toUpperCase() ?: 'DEBUG'
+
+    inputs.property "mode", mode
+    dependsOn kotlin.targets.ios.compilations.main.linkTaskName("FRAMEWORK", mode)
+
+    from { kotlin.targets.ios.compilations.main.getBinary("FRAMEWORK", mode).parentFile }
+    into frameworkDir
+
+    doLast {
+        new File(frameworkDir, 'gradlew').with {
+            text = "#!/bin/bash\nexport 'JAVA_HOME=${System.getProperty("java.home")}'\ncd '${rootProject.rootDir}'\n./gradlew \$@\n"
+            setExecutable(true)
+        }
+    }
+}
+
+tasks.build.dependsOn packForXCode
+
+// js task
+
+[compileKotlinJs, compileTestKotlinJs]*.configure {
+    kotlinOptions {
+        moduleKind = "commonjs"
+    }
+}
+
+task packForJs(type: Copy, dependsOn: compileKotlinJs) {
+    from compileKotlinJs.destinationDir
+
+    into "${buildDir}/js_modules"
+}
+
+tasks.build.dependsOn packForJs
